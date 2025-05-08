@@ -25,10 +25,10 @@ class Angkot(Device):
         return len(result)
 
     def handle_nearest_halt(self):
-        rute_id = self.payload[0]
-        cur_lat = self.payload[1]
-        cur_long = self.payload[2]
-        range_time = self.payload[3]
+        rute_id = self.payload[1]
+        cur_lat = self.payload[2]
+        cur_long = self.payload[3]
+        range_time = self.payload[4]
 
         result = self.db_service.execute_raw_query(
             collection_name="halt",
@@ -60,10 +60,10 @@ class Angkot(Device):
         return f"ACK,{request_angkot_counter}"
     
     def handle_naik_turun_angkot(self):
-        rfid = self.payload[0]
-        is_entry = self.payload[1]
-        cur_lat = self.payload[2]
-        cur_long = self.payload[3]
+        rfid = self.payload[1]
+        is_entry = self.payload[2]
+        cur_lat = self.payload[3]
+        cur_long = self.payload[4]
 
         result = self.db_service.execute_raw_query(
             collection_name="penumpang",
