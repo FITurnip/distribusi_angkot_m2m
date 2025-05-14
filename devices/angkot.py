@@ -60,7 +60,7 @@ class Angkot(Device):
         return f"ACK,{request_angkot_counter}"
     
     def handle_naik_turun_angkot(self):
-        rfid = self.payload[1]
+        card_uid = self.payload[1]
         is_entry = self.payload[2]
         cur_lat = self.payload[3]
         cur_long = self.payload[4]
@@ -68,7 +68,7 @@ class Angkot(Device):
         result = self.db_service.execute_raw_query(
             collection_name="penumpang",
             query=[
-                {"$match": {"rfid":rfid}},
+                {"$match": {"card_uid":card_uid}},
             ]
         )
 
@@ -79,13 +79,14 @@ class Angkot(Device):
             return f"ACK,aktivitas_illegal"
         else:
             penumpang = result[0]
+            print(penumpang)
 
             self.db_service.insert_document(collection_name="passenger_monitor", document= {
                 "is_entry": is_entry,
                 "angkot_id": self.device_id,
                 "lat": cur_lat,
                 "cur_long": cur_long,
-                "penumpang_id": penumpang["id"]
+                "penumpang_id": penumpang["_id"]
             })
 
             status = "OK"

@@ -3,6 +3,7 @@ from devices.device import Device
 from devices.angkot import Angkot
 from devices.halt_point import HaltPoint
 import logging
+import time
 
 # Configure logging
 logging.basicConfig(filename='mqtt_handler.log', level=logging.DEBUG, 
@@ -48,10 +49,14 @@ class MQTTHandler:
         if category == "request":
             device = self.get_device_instance(device_type, device_id, payload)
             method_name = f"handle_{payload[0]}"  # Determine method dynamically
+            logging.info(f"{device} processing {method_name}")
             if hasattr(device, method_name):
                 response_payload = getattr(device, method_name)()
             else:
                 response_payload = device.handle_request()
+            
+            # make delay
+            time.sleep(1)
             
             response_topic = f"device/{device_type}/{device_id}/response"
             self.client.publish(response_topic, response_payload)

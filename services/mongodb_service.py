@@ -1,9 +1,14 @@
 from pymongo import MongoClient
 
 class MongoDBService:
-    def __init__(self, uri="mongodb://localhost:27017/", db_name="monitoring_distribusi_angkot"):
-        self.client = MongoClient(uri)
-        self.db = self.client[db_name]
+    def __init__(self, uri="mongodb://newadmin:newpassword123@localhost:27017/?authSource=admin", db_name="monitoring_distribusi_angkot"):
+        try:
+            self.client = MongoClient(uri, serverSelectionTimeoutMS=5000)  # 5-second timeout
+            self.client.admin.command('ping')  # Attempt to ping the server
+            print("MongoDB connection successful.")
+            self.db = self.client[db_name]
+        except ConnectionFailure as e:
+            print("MongoDB connection failed:", e)
 
     def insert_document(self, collection_name, document):
         collection = self.db[collection_name]
@@ -51,6 +56,8 @@ class MongoDBService:
         :return: The query result as a list.
         """
         collection = self.db[collection_name]
+
+        print(f"exec {collection_name} {query}")
         
         if isinstance(query, list):  # Aggregation query
             return list(collection.aggregate(query))
