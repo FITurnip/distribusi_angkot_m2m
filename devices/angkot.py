@@ -1,12 +1,13 @@
 from devices.device import Device
+from bson import ObjectId
 
 class Angkot(Device):
     def get_request_angkot_counter(self, halt_id, rute_id, range_time):
         result = self.db_service.execute_raw_query(
             collection_name="request_angkot",
             query=[
-                {"$match": {"halt_id": halt_id}},
-                {"$match": {"rute_id": rute_id}},
+                {"$match": {"halt_id": ObjectId(halt_id)}},
+                {"$match": {"rute_id": ObjectId(rute_id)}},
                 {
                     "$match": {
                         "timestamp": {
@@ -46,7 +47,7 @@ class Angkot(Device):
                     "foreignField": "halt_ids",
                     "as": "rute_data"
                 }},
-                {"$match": {"rute_data.id":rute_id}},
+                {"$match": {"rute_data.id":ObjectId(rute_id)}},
                 {"$sort": {"distance": 1}},  # Sort by nearest angkot
                 {"$limit": 1},  # Get only the nearest angkot
             ]
@@ -61,9 +62,9 @@ class Angkot(Device):
     
     def handle_naik_turun_angkot(self):
         card_uid = self.payload[1]
-        is_entry = self.payload[2]
-        cur_lat = self.payload[3]
-        cur_long = self.payload[4]
+        is_entry = int(self.payload[2])
+        cur_lat = float(self.payload[3])
+        cur_long = float(self.payload[4])
 
         result = self.db_service.execute_raw_query(
             collection_name="penumpang",
@@ -83,11 +84,32 @@ class Angkot(Device):
 
             self.db_service.insert_document(collection_name="passenger_monitor", document= {
                 "is_entry": is_entry,
-                "angkot_id": self.device_id,
-                "lat": cur_lat,
-                "cur_long": cur_long,
-                "penumpang_id": penumpang["_id"]
+                "angkot_id": ObjectId(self.device_id),
+                "penumpang_id": ObjectId(penumpang["_id"]),
+                "location": {
+                    "type": "Point",
+                    "coordinates": [cur_long, cur_lat]
+                }
             })
+
+            increamentPenumpang = 1 if is_entry else -1
+
+            self.db_service.update_document(
+                collection_name="angkot",
+                query={"_id": ObjectId(self.device_id)},
+                update_query={"$inc":{"jumlah_penumpang":increamentPenumpang}},
+            )
 
             status = "OK"
             return f"ACK,{status},{is_entry}"
+
+    def handle_mulai_operasi(self):
+        self.db_service.update_document(
+            collection_name="angkot",
+            query={"_id": ObjectId(self.device_id)},
+            update_query={"$set":{"jumlah_penumpang":0}},
+            upsert_cond=True
+        )
+
+        status = "OK"
+        return f"ACK,{status}"

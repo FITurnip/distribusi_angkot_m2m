@@ -22,9 +22,9 @@ class MongoDBService:
         collection = self.db[collection_name]
         return list(collection.find())
 
-    def update_document(self, collection_name, query, update_values):
+    def update_document(self, collection_name, query, update_query, upsert_cond = False):
         collection = self.db[collection_name]
-        return collection.update_one(query, {"$set": update_values}).modified_count
+        return collection.update_one(query, update_query, upsert_cond ).modified_count
 
     def delete_document(self, collection_name, query):
         collection = self.db[collection_name]
